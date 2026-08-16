@@ -5,6 +5,7 @@ import { useEventFilter } from './hooks/useEventFilter'
 import { Calendar } from './components/Calendar'
 import { EventsMap } from './components/EventsMap'
 import { EventCard } from './components/EventCard'
+import { formatDateHuman, formatDateRangeHuman } from './utils/date'
 import './App.css'
 
 const allEvents = loadEvents()
@@ -29,11 +30,12 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1>Карта мероприятий Москвы</h1>
+        <span className="app__eyebrow">Москва · афиша</span>
+        <h1>Карта мероприятий</h1>
         <p className="app__subtitle">
-          {screenState === 'empty' && `Ближайшие мероприятия: ${snapshotWindow.start} – ${defaultRangeEnd}`}
-          {screenState === 'has-data' && `Мероприятия на ${selectedDate}`}
-          {screenState === 'not-found' && `Мероприятия на ${selectedDate}`}
+          {screenState === 'empty' &&
+            `Ближайшие мероприятия: ${formatDateRangeHuman(snapshotWindow.start, defaultRangeEnd)}`}
+          {screenState !== 'empty' && selectedDate && `Мероприятия на ${formatDateHuman(selectedDate)}`}
         </p>
       </header>
 
@@ -45,24 +47,42 @@ export default function App() {
           initialMonth={snapshotWindow.start}
         />
         <div className="app__filter">
-          <label htmlFor="category-select">Категория</label>
-          <select
-            id="category-select"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value as typeof selectedCategory)}
-          >
-            <option value="all">Все категории</option>
-            {ALL_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
-              </option>
-            ))}
-          </select>
-          {selectedDate !== null && (
-            <button type="button" className="app__reset" onClick={() => setSelectedDate(null)}>
-              Сбросить день
+          <div className="app__filter-head">
+            <span className="app__eyebrow">Категория</span>
+            {selectedDate !== null && (
+              <button type="button" className="app__reset" onClick={() => setSelectedDate(null)}>
+                Сбросить день ✕
+              </button>
+            )}
+          </div>
+          <div className="app__chips" role="group" aria-label="Категория мероприятия">
+            <button
+              type="button"
+              className="app__chip"
+              data-active={selectedCategory === 'all'}
+              aria-pressed={selectedCategory === 'all'}
+              onClick={() => setSelectedCategory('all')}
+            >
+              Все
             </button>
-          )}
+            {ALL_CATEGORIES.map((cat) => {
+              const meta = CATEGORY_META[cat]
+              const active = selectedCategory === cat
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  className="app__chip"
+                  data-active={active}
+                  aria-pressed={active}
+                  style={active ? { background: meta.color, borderColor: meta.color } : { borderColor: meta.color }}
+                  onClick={() => setSelectedCategory(cat)}
+                >
+                  <span aria-hidden="true">{meta.emoji}</span> {meta.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
@@ -71,7 +91,7 @@ export default function App() {
           {screenState === 'not-found' && (
             <p className="app__empty-message">
               Ничего не найдено на выбранный день и категорию. Попробуйте выбрать другой день или
-              категорию «Все категории».
+              категорию «Все».
             </p>
           )}
           {visibleEvents.length === 0 && screenState === 'empty' && (
@@ -80,13 +100,18 @@ export default function App() {
           <ul>
             {visibleEvents.map((event) => (
               <li key={event.id}>
-                <button type="button" className="app__list-item" onClick={() => setSelectedEventId(event.id)}>
-                  <span className="app__list-item-emoji">{CATEGORY_META[event.category].emoji}</span>
-                  <span>
+                <button
+                  type="button"
+                  className="app__list-item"
+                  style={{ borderInlineStartColor: CATEGORY_META[event.category].color }}
+                  onClick={() => setSelectedEventId(event.id)}
+                >
+                  <span className="app__list-item-time">{event.startTime ?? '—'}</span>
+                  <span className="app__list-item-body">
                     <strong>{event.title}</strong>
-                    <br />
-                    {event.date}
-                    {event.startTime ? `, ${event.startTime}` : ''} · {event.place.title}
+                    <span className="app__list-item-place">
+                      {CATEGORY_META[event.category].emoji} {event.place.title}
+                    </span>
                   </span>
                 </button>
               </li>

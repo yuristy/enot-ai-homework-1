@@ -14,3 +14,35 @@ export function addDays(dateStr: string, days: number): string {
 export function isDateInRange(date: string, start: string, end: string): boolean {
   return date >= start && date <= end
 }
+
+const MONTHS_GENITIVE = [
+  'января',
+  'февраля',
+  'марта',
+  'апреля',
+  'мая',
+  'июня',
+  'июля',
+  'августа',
+  'сентября',
+  'октября',
+  'ноября',
+  'декабря',
+]
+
+// Display-only formatting — never used for comparisons or storage, those stay on YYYY-MM-DD strings.
+export function formatDateHuman(dateStr: string): string {
+  const [, m, d] = dateStr.split('-').map(Number)
+  return `${d} ${MONTHS_GENITIVE[m - 1]}`
+}
+
+export function formatDateRangeHuman(start: string, end: string): string {
+  const [ys, ms] = start.split('-').map(Number)
+  const [ye, me] = end.split('-').map(Number)
+  const de = Number(end.split('-')[2])
+  if (ys === ye && ms === me) {
+    const ds = Number(start.split('-')[2])
+    return `${ds}–${de} ${MONTHS_GENITIVE[ms - 1]}`
+  }
+  return `${formatDateHuman(start)} – ${formatDateHuman(end)}`
+}
