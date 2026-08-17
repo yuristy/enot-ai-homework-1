@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { AppEvent } from '../data/types'
+import { formatDateHuman } from '../utils/date'
 
 interface CalendarProps {
   events: AppEvent[]
@@ -29,8 +30,17 @@ function toDateKey(year: number, month: number, day: number): string {
 }
 
 export function Calendar({ events, selectedDate, onSelectDate, initialMonth }: CalendarProps) {
-  const [year, initialMonthIndex] = initialMonth.split('-').map(Number)
+  const [year, initialMonthIndex] = (selectedDate ?? initialMonth).split('-').map(Number)
   const [cursor, setCursor] = useState({ year, month: initialMonthIndex - 1 })
+
+  // Keep the visible month in sync with a selectedDate set from outside
+  // (e.g. restored from localStorage on load) rather than only reacting to
+  // in-calendar navigation.
+  useEffect(() => {
+    if (!selectedDate) return
+    const [y, m] = selectedDate.split('-').map(Number)
+    setCursor((prev) => (prev.year === y && prev.month === m - 1 ? prev : { year: y, month: m - 1 }))
+  }, [selectedDate])
 
   const eventCountByDate = useMemo(() => {
     const map = new Map<string, number>()
@@ -81,12 +91,14 @@ export function Calendar({ events, selectedDate, onSelectDate, initialMonth }: C
           const dateKey = toDateKey(cursor.year, cursor.month, day)
           const count = eventCountByDate.get(dateKey) ?? 0
           const isSelected = dateKey === selectedDate
+          const label = `${formatDateHuman(dateKey)}${count > 0 ? `, мероприятий: ${count}` : ', мероприятий нет'}`
           return (
             <button
               key={dateKey}
               type="button"
               className={`calendar__cell calendar__day${isSelected ? ' calendar__day--selected' : ''}`}
               aria-pressed={isSelected}
+              aria-label={label}
               onClick={() => onSelectDate(isSelected ? null : dateKey)}
             >
               <span>{day}</span>

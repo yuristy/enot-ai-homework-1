@@ -44,15 +44,24 @@ export function useEventFilter(events: AppEvent[]) {
 
   useEffect(() => {
     const value: StoredFilter = { selectedDate, selectedCategory }
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+    } catch {
+      // Storage unavailable (private mode, quota, disabled) — filter still works in-memory.
+    }
   }, [selectedDate, selectedCategory])
 
   const defaultRangeEnd = useMemo(() => addDays(snapshotWindow.start, DEFAULT_RANGE_DAYS - 1), [])
 
   const { visibleEvents, screenState } = useMemo(() => {
     if (selectedDate === null) {
-      const inRange = events.filter((e) => isDateInRange(e.date, snapshotWindow.start, defaultRangeEnd))
-      return { visibleEvents: inRange, screenState: 'empty' as ScreenState }
+      const inRange = events.filter(
+        (e) =>
+          isDateInRange(e.date, snapshotWindow.start, defaultRangeEnd) &&
+          (selectedCategory === 'all' || e.category === selectedCategory),
+      )
+      const state: ScreenState = inRange.length > 0 || selectedCategory === 'all' ? 'empty' : 'not-found'
+      return { visibleEvents: inRange, screenState: state }
     }
     const filtered = events.filter(
       (e) => e.date === selectedDate && (selectedCategory === 'all' || e.category === selectedCategory),

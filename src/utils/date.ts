@@ -1,7 +1,13 @@
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
+// Rejects strings that match the YYYY-MM-DD shape but aren't a real calendar
+// date (e.g. "2026-13-45") by round-tripping through Date.UTC and checking
+// the components survived unchanged.
 export function isValidDateString(value: unknown): value is string {
-  return typeof value === 'string' && DATE_RE.test(value)
+  if (typeof value !== 'string' || !DATE_RE.test(value)) return false
+  const [y, m, d] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(y, m - 1, d))
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d
 }
 
 export function addDays(dateStr: string, days: number): string {

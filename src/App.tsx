@@ -27,15 +27,28 @@ export default function App() {
     [visibleEvents, selectedEventId],
   )
 
+  const statusMessage = useMemo(() => {
+    if (screenState === 'not-found') {
+      return selectedDate
+        ? 'Ничего не найдено на выбранный день и категорию. Попробуйте выбрать другой день или категорию «Все».'
+        : 'На ближайшие дни мероприятий этой категории нет. Попробуйте выбрать категорию «Все» или другой день.'
+    }
+    if (screenState === 'empty' && visibleEvents.length === 0) {
+      return 'На ближайшие дни мероприятий в снапшоте нет.'
+    }
+    return `Найдено мероприятий: ${visibleEvents.length}.`
+  }, [screenState, selectedDate, visibleEvents.length])
+  const showEmptyMessage = screenState === 'not-found' || (screenState === 'empty' && visibleEvents.length === 0)
+
   return (
     <div className="app">
       <header className="app__header">
         <span className="app__eyebrow">Москва · афиша</span>
         <h1>Карта мероприятий</h1>
         <p className="app__subtitle">
-          {screenState === 'empty' &&
-            `Ближайшие мероприятия: ${formatDateRangeHuman(snapshotWindow.start, defaultRangeEnd)}`}
-          {screenState !== 'empty' && selectedDate && `Мероприятия на ${formatDateHuman(selectedDate)}`}
+          {selectedDate === null
+            ? `Ближайшие мероприятия: ${formatDateRangeHuman(snapshotWindow.start, defaultRangeEnd)}`
+            : `Мероприятия на ${formatDateHuman(selectedDate)}`}
         </p>
       </header>
 
@@ -88,15 +101,10 @@ export default function App() {
 
       <div className="app__body">
         <aside className="app__list" aria-label="Список мероприятий">
-          {screenState === 'not-found' && (
-            <p className="app__empty-message">
-              Ничего не найдено на выбранный день и категорию. Попробуйте выбрать другой день или
-              категорию «Все».
-            </p>
-          )}
-          {visibleEvents.length === 0 && screenState === 'empty' && (
-            <p className="app__empty-message">На ближайшие дни мероприятий в снапшоте нет.</p>
-          )}
+          <p className="sr-only" role="status" aria-live="polite">
+            {statusMessage}
+          </p>
+          {showEmptyMessage && <p className="app__empty-message">{statusMessage}</p>}
           <ul>
             {visibleEvents.map((event) => (
               <li key={event.id}>

@@ -15,7 +15,7 @@
 }
 
 .app__header {
-  padding: 16px 20px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--line);
   background: var(--surface-1);
 }
@@ -36,7 +36,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  padding: 14px 20px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--line);
   align-items: flex-start;
   background: var(--surface-0);
@@ -44,7 +44,7 @@
 
 /* --- Calendar: departure-board dots --- */
 .calendar {
-  width: 260px;
+  width: 224px;
   max-width: 100%;
 }
 .calendar__header {
